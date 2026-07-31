@@ -12,9 +12,11 @@ Una capa de bajo nivel sobre `python-docx` que inyecta el OOXML que la librería
 
 `python-docx` escribe párrafos, tablas e imágenes. Lo que no escribe es casi todo lo que distingue un documento compuesto de uno tecleado: una numeración de secciones que aparezca en el índice y se renumere sola, partición de palabras para que el texto justificado no abra ríos, un índice que Word sepa rellenar, cuadros con filete grueso arriba y ninguna línea vertical, supresión de partición dentro de una columna de tres centímetros.
 
-Todo eso existe en el formato OOXML, y se llega a ello inyectando XML a mano en el árbol que `python-docx` mantiene. `ooxmlkit` es ese trabajo ya hecho: 632 líneas, 34 funciones, una sola dependencia externa.
+Todo eso existe en el formato OOXML, y se llega a ello inyectando XML a mano en el árbol que `python-docx` mantiene. `ooxmlkit` es ese trabajo ya hecho: 647 líneas, 34 funciones, una sola dependencia externa.
 
 Sirve a quien genera documentos Word por código y necesita que se impriman bien: informes recurrentes, documentación técnica, entregables normativos. Si el destino es la pantalla y no el papel, HTML resuelve mejor y con menos requisitos.
+
+**Si lo que quieres es tu manual de identidad en Word,** parte del ejemplo trabajado y no de la API: [`ejemplo/manual.py`](ejemplo/manual.py) compone un manual completo de siete páginas para una persona, y cambiar las decisiones de ella por las tuyas es el camino más corto. El repositorio hermano [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal) es el que toma esas decisiones contigo, y entrega el mismo manual en HTML y PDF; este agrega el `.docx` editable.
 
 ## 2. Qué hace / Qué no hace
 
@@ -23,10 +25,10 @@ Sirve a quien genera documentos Word por código y necesita que se impriman bien
 - **Numeración de secciones de verdad.** Una lista multinivel ligada a los estilos `Heading 1` y `Heading 2`, no números escritos en el texto. Aparece en el índice, admite referencias cruzadas y se renumera sola al insertar una sección. Los anexos van en una secuencia aparte, con letra.
 - **Índice y campos de Word.** Inserta `TOC`, `PAGE` y `NUMPAGES` como campos, y marca el documento para que Word los actualice al abrirlo.
 - **Partición de palabras controlada.** Activa la partición automática, que el texto justificado exige, y la suprime por estilo en las medidas cortas donde afea: notas, celdas, pies de figura.
-- **Cuadros compuestos.** Numerados, con título arriba y nota al pie, filete grueso de apertura y cierre, sin una sola línea vertical, ancho de columna fijo y encabezado que se repite al partir el cuadro entre páginas.
+- **Cuadros compuestos.** Numerados, con título arriba y nota al pie, filete grueso de apertura y cierre, sin una sola línea vertical, ancho de columna fijo, encabezado que se repite al partir el cuadro entre páginas y última fila que viaja con su nota.
 - **Figuras numeradas** con pie y nota, insertadas a un ancho declarado en centímetros.
 - **Contraste WCAG 2.1 calculado.** `ratio()` y `nivel()` devuelven la razón de contraste y el nivel que alcanza, para que un documento pueda declarar sus contrastes por cálculo y no a ojo.
-- **Paleta como diccionario.** Cualquier función que recibe un color acepta una clave de la paleta o un hexadecimal suelto, así que se puede usar el diccionario, sustituirlo con `usar_paleta()` o ignorarlo por completo.
+- **Paleta como diccionario de roles.** Las diez claves son roles y no colores: `primario`, `senal`, `texto_sec`. Cualquier función que recibe un color acepta una clave de la paleta o un hexadecimal suelto, así que se puede usar el diccionario, sustituirlo con `usar_paleta()` o ignorarlo por completo.
 
 **Qué no hace**
 
@@ -36,11 +38,12 @@ Sirve a quien genera documentos Word por código y necesita que se impriman bien
 - **No abstrae `python-docx`.** Lo complementa. El documento se sigue armando con `Document()`, `add_paragraph()` y `add_table()`; `ooxmlkit` interviene donde esa API se queda corta.
 - **No maneja plantillas, combinación de correspondencia ni lectura de `.docx` ajenos.** Solo escritura.
 - **No promete estabilidad de API.** Es el código que compone un documento real, extraído para que sirva a otros. Ver el estado, al final.
+- **No trae un diseño.** La paleta por defecto es un andamio en escala de grises, para que el módulo componga sin configuración. Elegir los matices, la letra y la voz son decisiones de identidad, y no le tocan a una librería: eso lo resuelve el repositorio hermano, con la persona.
 
 ## 3. Requisitos
 
 - **Python 3.9 o superior** y **`python-docx`**: `pip install python-docx`. Es la única dependencia. Probado con `python-docx` 1.2 y Python 3.14.
-- **Las tipografías instaladas** en el equipo que genera el documento. Las familias por defecto son IBM Plex, de licencia OFL. Si no están, Word sustituye sin avisar. Para usar otras, se reasignan: `ooxmlkit.SERIF = "Georgia"`.
+- **Las tipografías instaladas** en el equipo que genera el documento. Las familias por defecto son IBM Plex, de licencia OFL. Si no están, Word sustituye sin avisar. Para usar otras, se reasignan: `ooxmlkit.SERIF = "Georgia"`. El ejemplo reasigna las tres suyas, Fraunces, Nunito Sans y Space Mono, que también son OFL y se bajan de Google Fonts; sin ellas el manual se compone igual, con otra letra.
 - **Windows con Microsoft Word**, solo para `cerrar.ps1`. Sin esto se obtiene el `.docx`, con el índice vacío.
 
 ## 4. Instalación
@@ -123,7 +126,7 @@ Tres capas, de más a menos general.
 
 | Función | Qué hace |
 | --- | --- |
-| `PALETA` | Diccionario de diez colores por defecto |
+| `PALETA` | Diez roles: `texto`, `texto_fuerte`, `texto_sec`, `texto_ter`, `primario`, `primario_int`, `senal`, `fondo`, `superficie`, `borde`. Los valores por defecto son un andamio en grises, no un diseño |
 | `usar_paleta(colores)` | Agrega o sustituye colores. Solo toca las claves que se pasan |
 | `hexa(k)` | Hexadecimal sin almohadilla, de una clave o de un hex suelto. Levanta `ValueError` si el color no es válido, para que una clave mal escrita no entre al XML en silencio |
 | `hx(k)` | Hexadecimal en mayúsculas y con almohadilla, para imprimirlo en el documento |
@@ -138,15 +141,29 @@ Tres capas, de más a menos general.
 
 ## 7. El ejemplo
 
-`ejemplo/informe.py` genera un informe de cinco páginas que ejercita toda la API: portada, índice, dos secciones numeradas, un anexo con letra, dos cuadros, una figura, una franja de color y un pie con numeración de páginas. El cuadro del anexo se compone leyendo la paleta y calculando los contrastes al generar, así que ningún valor está escrito a mano.
+`ejemplo/manual.py` compone **el manual de identidad de Ignacia Fuentes**, siete páginas con portada, índice, tres secciones numeradas, un anexo con letra, cuatro cuadros, una figura, una franja de color y un pie con la paginación. Ignacia es una persona ficticia, y su sistema está publicado en el repositorio hermano [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal), donde el mismo manual sale en HTML y PDF. Es la misma persona en los dos sitios: acá se ve qué agrega el `.docx`.
+
+El ejemplo está repartido en dos archivos a propósito, y ese reparto es lo que conviene copiar:
+
+- **`ejemplo/ignacia.py`** — lo que decide la persona: sus diez roles de color, sus tres familias y dos notas. Nada de OOXML.
+- **`ejemplo/manual.py`** — lo que compone la librería. Nada de Ignacia, salvo lo que importa del archivo anterior.
+
+Sustituir el primero por el tuyo, y ajustar el texto del segundo, es el camino corto a tu propio manual. Las dos líneas que convierten la librería en el sistema de una persona son estas, y van antes de `construir_estilos()`:
+
+```python
+ooxmlkit.usar_paleta(PALETA)                  # los diez roles, con tus valores
+ooxmlkit.SERIF, ooxmlkit.SANS = SERIF, SANS   # tus familias
+```
+
+Los contrastes del Cuadro 2 se calculan al generar con `ratio()`, así que ningún valor está escrito a mano: si cambias un color, el cuadro cambia solo.
 
 ```bash
 python ejemplo/figura.py           # el PNG, solo si se quiere regenerar
-python ejemplo/informe.py          # el .docx, desde la raíz del repositorio
-powershell -File cerrar.ps1 ejemplo\informe.docx
+python ejemplo/manual.py           # el .docx, desde cualquier directorio
+powershell -File cerrar.ps1 ejemplo\manual.docx
 ```
 
-El resultado está en el repositorio: [`informe.docx`](ejemplo/informe.docx) · [`informe.pdf`](ejemplo/informe.pdf).
+El resultado está en el repositorio: [`manual.docx`](ejemplo/manual.docx) · [`manual.pdf`](ejemplo/manual.pdf).
 
 ## 8. Trampas conocidas
 
@@ -168,4 +185,13 @@ Publicado bajo licencia **MIT**. Copyright (c) 2026 Carlos Padilla Bravo. Se pue
 
 Autor: **Carlos Padilla Bravo**
 
-`ooxmlkit` salió de la cadena que genera un manual de identidad de marca personal. El método de ese manual está publicado aparte, como skill de Claude Code: [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal). Esa skill entrega HTML y su PDF, y no usa esta librería; `ooxmlkit` importa cuando el entregable tiene que ser un `.docx` editable.
+`ooxmlkit` salió de la cadena que genera un manual de identidad de marca personal. Los dos repositorios se reparten el trabajo así:
+
+| | [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal) | ooxmlkit |
+| --- | --- | --- |
+| Qué es | Una skill de Claude Code | Una librería de Python |
+| Qué resuelve | **Qué decide la persona**: esencia, territorio, color, tipografía, voz | **Cómo se compone** el documento |
+| Qué entrega | El manual en HTML, y su PDF desde el navegador | El manual en `.docx` editable |
+| Qué pide | Nada más que un navegador | Windows con Word, para cerrarlo |
+
+El orden natural es primero uno y después el otro: la skill toma las decisiones contigo, y esta librería las compone en Word. No se usan entre sí, y por eso el ejemplo de acá y el de allá son la misma persona.

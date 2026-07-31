@@ -1,7 +1,7 @@
 # Cierra un .docx generado por ooxmlkit: actualiza los campos, incrusta las
 # tipografias y exporta el PDF.
 #
-#     powershell -File cerrar.ps1 ejemplo\informe.docx
+#     powershell -File cerrar.ps1 ejemplo\manual.docx
 #
 # El indice, el total de paginas y la incrustacion de fuentes no se pueden
 # escribir desde python-docx: son campos que solo Word resuelve al abrir el

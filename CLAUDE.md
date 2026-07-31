@@ -26,6 +26,22 @@ Don't reopen these without being asked.
 - **`construir_estilos()`, `claro_oscuro()` and `nom_hx()` are a worked example,
   not an API.** They are the closed typographic scheme of one document. Don't
   turn them into something configurable; that is what copying and editing is for.
+- **The default palette is a greyscale scaffold and stays that way.** It used to
+  ship the author's own brand, and an outdated generation of it at that. Making
+  it follow his brand more faithfully was the wrong fix and was rejected: a tool
+  for other people should not carry anyone's colour. The sibling repo settled
+  the convention first, in `assets/plantilla.html`. Don't put hues back in.
+- **The ten keys are roles, not colours.** `primario`, not `azul`; `senal`, not
+  `naranja`. The point is that `usar_paleta()` can drop a green into `primario`
+  without the name turning into a lie. Renaming one back to a hue breaks that.
+- **The example is Ignacia's manual, and she is shared with the sibling repo.**
+  It is deliberately the same fictional person `identidad-personal` publishes in
+  HTML, so the two repositories visibly meet. If her palette or her families
+  change there, this example starts stating values that repo no longer holds.
+  Nothing enforces it.
+- **The example is split in two files on purpose.** `ejemplo/ignacia.py` is what
+  the person decides, `ejemplo/manual.py` is what the library typesets. That
+  split is the thing a reader is meant to copy, so don't merge them for brevity.
 - **The Windows and Word requirement is declared on the first screen of both
   READMEs.** It is the limitation that weighs most. Keep it there; don't move it
   into a footnote.
@@ -50,10 +66,15 @@ Don't reopen these without being asked.
 - **The figures quoted in the READMEs are checked against the code**, not
   estimated: line count, number of public functions, number of styles, number of
   palette entries, pages in the example. If you change the module, recount them.
-- **Regenerating the example rewrites a 4.8 MB blob.** `ejemplo/informe.docx`
-  carries 16 embedded font files, which is why it opens correctly on a machine
-  without IBM Plex. Regenerate it when the output really changes, not by reflex:
-  every regeneration adds another copy to the history.
+- **Regenerating the example rewrites a 4.3 MB blob.** `ejemplo/manual.docx`
+  carries 14 embedded font files, which is why it opens correctly on a machine
+  without Fraunces, Nunito Sans or Space Mono. Regenerate it when the output
+  really changes, not by reflex: every regeneration adds another copy to the
+  history.
+- **`cerrar.ps1` is what embeds them, and running `manual.py` again undoes it.**
+  A bare `python ejemplo/manual.py` leaves a 78 kB file with an empty index and
+  no fonts, and it looks finished. Whatever else you do, close the document
+  again before committing, and check `word/fonts/` is not empty.
 - **A copy of this module still runs inside the private project it came from.**
   A fix here usually needs porting there, and the other way round. They are two
   files, not one; assume they have drifted until checked.
@@ -62,7 +83,8 @@ Don't reopen these without being asked.
 
 - `ooxmlkit.py` — the module.
 - `cerrar.ps1` — drives Word over COM to resolve fields, embed fonts, export PDF.
-- `ejemplo/informe.py` — the five-page report that exercises the whole API;
+- `ejemplo/manual.py` — the seven-page identity manual that exercises the whole
+  API; `ejemplo/ignacia.py` holds the person's decisions and nothing else;
   `ejemplo/figura.py` regenerates its PNG and is the only thing here that wants
   matplotlib.
 - `README.md` / `README.es.md`, `LICENSE`.
@@ -72,8 +94,8 @@ Don't reopen these without being asked.
 There is no test suite; the deliverable is checked on the output.
 
 ```bash
-python ejemplo/informe.py
-powershell -File cerrar.ps1 ejemplo\informe.docx
+python ejemplo/manual.py
+powershell -File cerrar.ps1 ejemplo\manual.docx
 ```
 
 Then read the PDF page by page. Typesetting defects do not appear in extracted

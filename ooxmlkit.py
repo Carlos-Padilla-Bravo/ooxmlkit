@@ -16,20 +16,27 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-# Paleta por defecto. Toda funcion que recibe un color acepta una clave de este
-# diccionario o un hexadecimal suelto, asi que se puede ignorar por completo.
-# Para cambiarla, entera o en parte, usar_paleta().
+# Paleta por defecto. Es un ANDAMIO, no un diseno: diez roles en escala de
+# grises, para que el modulo componga sin configuracion y sin imponer el color
+# de nadie. Elegir los matices es una decision de identidad y no le toca a una
+# libreria, asi que aqui no hay ninguno. Se sustituye con usar_paleta(), y el
+# ejemplo lo hace en su primera linea.
+#
+# Las claves son ROLES y no colores: "primario" se puede sustituir por un verde
+# sin que el nombre mienta, cosa que "azul" no permitiria. Toda funcion que
+# recibe un color acepta una clave de este diccionario o un hexadecimal suelto,
+# asi que tambien se puede ignorar por completo.
 PALETA = {
-    "tinta":        "#1A1D21",
-    "grafito":      "#33383D",
-    "grafito_med":  "#63696F",
-    "gris":         "#767D84",
-    "azul":         "#1F5FA8",
-    "azul_prof":    "#17436F",
-    "naranja_prof": "#9C4A05",
-    "blanco":       "#FFFFFF",
-    "nieve":        "#F4F5F7",
-    "borde":        "#DCDFE3",
+    "texto":        "#1A1A1A",  # cuerpo y titulos principales
+    "texto_fuerte": "#333333",  # jerarquia secundaria, entradilla, cita
+    "texto_sec":    "#5A5A5A",  # notas, pies, encabezado
+    "texto_ter":    "#767676",  # cotas y numeracion de tercer nivel
+    "primario":     "#404040",  # color de marca
+    "primario_int": "#262626",  # su version intensa, para texto sobre claro
+    "senal":        "#4D4D4D",  # marcador de cuadro y figura, racionado
+    "fondo":        "#FFFFFF",  # la hoja
+    "superficie":   "#F4F4F4",  # bloque tramado sobre la hoja
+    "borde":        "#DCDCDC",  # filetes finos
 }
 
 # Familias tipograficas. Se reasignan desde fuera: ooxmlkit.SERIF = "Georgia".
@@ -109,7 +116,7 @@ def nivel(v, grande=False):
             else "AA grande" if v >= 3 else "no cumple")
 
 
-def contra(a, b="blanco"):
+def contra(a, b="fondo"):
     """Razon de contraste como texto, con coma decimal."""
     return f"{ratio(a, b):.2f}".replace(".", ",")
 
@@ -223,15 +230,15 @@ def numeracion_de_secciones(doc, id_sec=90, id_anexo=91):
     # cuerpo de texto, y nada del documento invade los margenes.
     abst = el("w:abstractNum", **{"w:abstractNumId": id_sec})
     abst.append(el("w:multiLevelType", **{"w:val": "multilevel"}))
-    abst.append(_lvl(0, "decimal", "%1", 0, 0, MONO, 20, "azul"))
-    abst.append(_lvl(1, "decimal", "%1.%2", 0, 0, MONO, 14, "azul_prof"))
+    abst.append(_lvl(0, "decimal", "%1", 0, 0, MONO, 20, "primario"))
+    abst.append(_lvl(1, "decimal", "%1.%2", 0, 0, MONO, 14, "primario_int"))
     for i in range(2, 9):
-        abst.append(_lvl(i, "none", "", 0, 0, MONO, 11, "gris", negrita=False))
+        abst.append(_lvl(i, "none", "", 0, 0, MONO, 11, "texto_ter", negrita=False))
 
     # Anexos: letra en vez de cifra, fuera de la secuencia numerica.
     abst_a = el("w:abstractNum", **{"w:abstractNumId": id_anexo})
     abst_a.append(el("w:multiLevelType", **{"w:val": "singleLevel"}))
-    abst_a.append(_lvl(0, "upperLetter", "%1", 0, 0, MONO, 20, "grafito"))
+    abst_a.append(_lvl(0, "upperLetter", "%1", 0, 0, MONO, 20, "texto_fuerte"))
 
     primero = num.find(qn("w:num"))
     for a in (abst, abst_a):
@@ -383,17 +390,17 @@ def construir_estilos(doc):
     normal = doc.styles["Normal"]
     normal.font.name = SERIF
     normal.font.size = Pt(11)
-    normal.font.color.rgb = rgb("tinta")
+    normal.font.color.rgb = rgb("texto")
     rPr = normal.element.get_or_add_rPr()
     rf = el("w:rFonts", **{"w:ascii": SERIF, "w:hAnsi": SERIF,
                            "w:cs": SERIF, "w:eastAsia": SERIF})
     rPr.insert(0, rf)
 
     for h, (tam, col, antes, desp, fam) in {
-            "Heading 1": (23, "tinta", 30, 10, SANS),
-            "Heading 2": (16, "azul_prof", 22, 7, SANS),
-            "Heading 3": (13, "grafito", 16, 5, SANS),
-            "Heading 4": (11, "grafito_med", 13, 4, COND)}.items():
+            "Heading 1": (23, "texto", 30, 10, SANS),
+            "Heading 2": (16, "primario_int", 22, 7, SANS),
+            "Heading 3": (13, "texto_fuerte", 16, 5, SANS),
+            "Heading 4": (11, "texto_sec", 13, 4, COND)}.items():
         st = doc.styles[h]
         st.font.name = fam
         st.font.size = Pt(tam)
@@ -417,38 +424,38 @@ def construir_estilos(doc):
             # blanco antes de la seccion.
             pf.page_break_before = True
 
-    _estilo(doc, "Cuerpo", SERIF, 11, "tinta", despues=8, interlin=1.45, alinear=J)
-    _estilo(doc, "Entradilla", SERIF, 13, "grafito", despues=12, interlin=1.35,
+    _estilo(doc, "Cuerpo", SERIF, 11, "texto", despues=8, interlin=1.45, alinear=J)
+    _estilo(doc, "Entradilla", SERIF, 13, "texto_fuerte", despues=12, interlin=1.35,
             alinear=J)
-    _estilo(doc, "Destacado", SERIF, 11, "azul_prof", despues=8, interlin=1.35,
+    _estilo(doc, "Destacado", SERIF, 11, "primario_int", despues=8, interlin=1.35,
             particion=False)
-    _estilo(doc, "Nota", COND, 9, "grafito_med", despues=6, interlin=1.3,
+    _estilo(doc, "Nota", COND, 9, "texto_sec", despues=6, interlin=1.3,
             alinear=J, particion=False)
-    _estilo(doc, "Dato", MONO, 10, "tinta", despues=6, interlin=1.35,
+    _estilo(doc, "Dato", MONO, 10, "texto", despues=6, interlin=1.35,
             particion=False)
-    _estilo(doc, "TituloCuadro", COND, 9.5, "tinta", antes=12, despues=4,
+    _estilo(doc, "TituloCuadro", COND, 9.5, "texto", antes=12, despues=4,
             interlin=1.25, particion=False)
-    _estilo(doc, "PieFigura", COND, 9.5, "tinta", antes=5, despues=4,
+    _estilo(doc, "PieFigura", COND, 9.5, "texto", antes=5, despues=4,
             interlin=1.25, particion=False)
-    _estilo(doc, "NotaTabla", COND, 8.5, "grafito_med", antes=2, despues=12,
+    _estilo(doc, "NotaTabla", COND, 8.5, "texto_sec", antes=2, despues=12,
             interlin=1.25, particion=False)
-    _estilo(doc, "Vineta", SERIF, 11, "tinta", despues=5, interlin=1.35,
+    _estilo(doc, "Vineta", SERIF, 11, "texto", despues=5, interlin=1.35,
             alinear=J, base="List Bullet", sangria=0.6)
-    _estilo(doc, "Enum", SERIF, 11, "tinta", despues=5, interlin=1.35,
+    _estilo(doc, "Enum", SERIF, 11, "texto", despues=5, interlin=1.35,
             alinear=J, base="List Number", sangria=0.6)
     # Las listas de regla van en bandera: no son cuerpo de texto y la
     # particion las afea en una medida corta.
-    _estilo(doc, "Regla", COND, 10, "tinta", despues=5, interlin=1.3,
+    _estilo(doc, "Regla", COND, 10, "texto", despues=5, interlin=1.3,
             sangria=0.6, particion=False)
-    _estilo(doc, "Imagen", SERIF, 11, "tinta", antes=10, despues=0,
+    _estilo(doc, "Imagen", SERIF, 11, "texto", antes=10, despues=0,
             particion=False)
-    _estilo(doc, "PortadaNombre", SANS, 33, "tinta", despues=0, interlin=1.0, particion=False)
-    _estilo(doc, "PortadaApellido", SANS, 33, "grafito_med", despues=0, interlin=1.0, particion=False)
-    _estilo(doc, "PortadaTitulo", SANS, 19, "tinta", antes=0, despues=6, interlin=1.15, particion=False)
-    _estilo(doc, "PortadaMeta", MONO, 9.5, "grafito_med", despues=3, interlin=1.4, particion=False)
-    _estilo(doc, "Encabezado", COND, 8.5, "grafito_med", despues=0,
+    _estilo(doc, "PortadaNombre", SANS, 33, "texto", despues=0, interlin=1.0, particion=False)
+    _estilo(doc, "PortadaApellido", SANS, 33, "texto_sec", despues=0, interlin=1.0, particion=False)
+    _estilo(doc, "PortadaTitulo", SANS, 19, "texto", antes=0, despues=6, interlin=1.15, particion=False)
+    _estilo(doc, "PortadaMeta", MONO, 9.5, "texto_sec", despues=3, interlin=1.4, particion=False)
+    _estilo(doc, "Encabezado", COND, 8.5, "texto_sec", despues=0,
             interlin=1.0, particion=False)
-    _estilo(doc, "Cita", COND, 10, "grafito", despues=8, interlin=1.35,
+    _estilo(doc, "Cita", COND, 10, "texto_fuerte", despues=8, interlin=1.35,
             alinear=J, sangria=0.8)
 
 
@@ -519,7 +526,7 @@ def cuadro(doc, n, titulo, encabezados, filas, anchos, nota=None,
            alinear=None, fuente_datos=None):
     """Cuadro numerado: titulo arriba, nota al pie. Sin lineas verticales."""
     p = doc.add_paragraph(style="TituloCuadro")
-    texto(p, f"Cuadro {n}. ", negrita=True, color="naranja_prof")
+    texto(p, f"Cuadro {n}. ", negrita=True, color="senal")
     texto(p, titulo)
     sin_separar(p)
 
@@ -546,11 +553,11 @@ def cuadro(doc, n, titulo, encabezados, filas, anchos, nota=None,
         par.paragraph_format.space_before = Pt(3)
         par.paragraph_format.space_after = Pt(3)
         par.paragraph_format.line_spacing = 1.15
-        texto(par, h, fuente=COND, tam=9, color="tinta", negrita=True)
-        _celda_fondo(c, "nieve")
+        texto(par, h, fuente=COND, tam=9, color="texto", negrita=True)
+        _celda_fondo(c, "superficie")
         _celda_margen(c)
-        _celda_borde(c, "top", 16, "tinta")
-        _celda_borde(c, "bottom", 8, "tinta")
+        _celda_borde(c, "top", 16, "texto")
+        _celda_borde(c, "bottom", 8, "texto")
         _celda_borde(c, "left", 0, "borde", "none")
         _celda_borde(c, "right", 0, "borde", "none")
 
@@ -579,15 +586,23 @@ def cuadro(doc, n, titulo, encabezados, filas, anchos, nota=None,
                 neg = linea.startswith("**")
                 linea = linea.replace("**", "")
                 texto(par, linea, fuente=fam, tam=9 if fam != SERIF else 9.5,
-                      color="tinta" if neg else "grafito", negrita=neg)
+                      color="texto" if neg else "texto_fuerte", negrita=neg)
             _celda_margen(c)
             _celda_borde(c, "bottom", 16 if ultima else 3,
-                         "tinta" if ultima else "borde")
+                         "texto" if ultima else "borde")
             _celda_borde(c, "left", 0, "borde", "none")
             _celda_borde(c, "right", 0, "borde", "none")
             _celda_borde(c, "top", 0, "borde", "none")
 
+    # La ultima fila se mantiene con la nota. Sin esto, un cuadro que termina
+    # cerca del pie de la pagina deja la nota sola en la siguiente, que es el
+    # defecto de composicion mas frecuente de este modulo. Es la misma regla que
+    # figura() ya aplica entre su pie y su nota.
     if nota:
+        for c in t.rows[-1].cells:
+            for par in c.paragraphs:
+                par.paragraph_format.keep_with_next = True
+
         p = doc.add_paragraph(style="NotaTabla")
         texto(p, "Nota. ", negrita=True)
         texto(p, nota)
@@ -604,7 +619,7 @@ def figura(doc, n, archivo, titulo, nota=None, ancho=CAJA_CM):
     p.add_run().add_picture(archivo, width=Cm(ancho))
     cap = doc.add_paragraph(style="PieFigura")
     cap.paragraph_format.keep_with_next = bool(nota)
-    texto(cap, f"Figura {n}. ", negrita=True, color="naranja_prof")
+    texto(cap, f"Figura {n}. ", negrita=True, color="senal")
     texto(cap, titulo)
     if nota:
         q = doc.add_paragraph(style="NotaTabla")

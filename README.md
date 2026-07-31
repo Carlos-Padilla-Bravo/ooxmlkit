@@ -12,9 +12,11 @@ A low-level layer over `python-docx` that injects the OOXML the library does not
 
 `python-docx` writes paragraphs, tables, and images. What it does not write is nearly everything that separates a typeset document from a typed one: section numbering that shows up in the table of contents and renumbers itself, hyphenation so justified text does not open rivers, a table of contents Word knows how to fill, tables with a thick rule on top and no vertical lines at all, suppressed hyphenation inside a three-centimetre column.
 
-All of it exists in the OOXML format, and you reach it by injecting XML by hand into the tree `python-docx` maintains. `ooxmlkit` is that work already done: 632 lines, 34 functions, one external dependency.
+All of it exists in the OOXML format, and you reach it by injecting XML by hand into the tree `python-docx` maintains. `ooxmlkit` is that work already done: 647 lines, 34 functions, one external dependency.
 
 It is for anyone generating Word documents from code that have to print well: recurring reports, technical documentation, normative deliverables. If the destination is a screen rather than paper, HTML solves it better and asks for less.
+
+**If what you want is your own brand identity manual in Word,** start from the worked example rather than from the API: [`ejemplo/manual.py`](ejemplo/manual.py) typesets a complete seven-page manual for one person, and swapping her decisions for yours is the shortest path. The companion repository [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal) is what takes those decisions with you in the first place, and delivers the same manual in HTML and PDF; this one adds the editable `.docx`.
 
 ## 2. What it does / What it does not do
 
@@ -23,10 +25,10 @@ It is for anyone generating Word documents from code that have to print well: re
 - **Real section numbering.** A multilevel list bound to the `Heading 1` and `Heading 2` styles, not numbers typed into the text. It appears in the table of contents, supports cross-references, and renumbers itself when a section is inserted. Appendices run in a separate lettered sequence.
 - **Table of contents and Word fields.** Inserts `TOC`, `PAGE`, and `NUMPAGES` as fields, and flags the document so Word updates them on open.
 - **Controlled hyphenation.** Turns on automatic hyphenation, which justified text needs, and suppresses it per style in the short measures where it looks bad: notes, cells, figure captions.
-- **Typeset tables.** Numbered, caption above and note below, thick opening and closing rules, not one vertical line, fixed column widths, and a header row that repeats when the table breaks across pages.
+- **Typeset tables.** Numbered, caption above and note below, thick opening and closing rules, not one vertical line, fixed column widths, a header row that repeats when the table breaks across pages, and a last row that travels with its note.
 - **Numbered figures** with caption and note, inserted at a width declared in centimetres.
 - **WCAG 2.1 contrast, computed.** `ratio()` and `nivel()` return the contrast ratio and the level it reaches, so a document can state its contrast figures by calculation rather than by eye.
-- **The palette as a dictionary.** Every function that takes a colour accepts a palette key or a bare hex value, so you can use the dictionary, replace it with `usar_paleta()`, or ignore it entirely.
+- **The palette as a dictionary of roles.** The ten keys are roles, not colours: `primario`, `senal`, `texto_sec`. Every function that takes a colour accepts a palette key or a bare hex value, so you can use the dictionary, replace it with `usar_paleta()`, or ignore it entirely.
 
 **What it does not do**
 
@@ -36,11 +38,12 @@ It is for anyone generating Word documents from code that have to print well: re
 - **It does not abstract `python-docx` away.** It complements it. You still build the document with `Document()`, `add_paragraph()`, and `add_table()`; `ooxmlkit` steps in where that API stops.
 - **It does not handle templates, mail merge, or reading someone else's `.docx`.** Writing only.
 - **It makes no API stability promise.** It is the code that typesets a real document, extracted so it can serve others. See the status section at the end.
+- **It does not ship a design.** The default palette is a greyscale scaffold, there so the module typesets with no configuration. Choosing hues, type, and voice are identity decisions, and they are not a library's business: the companion repository settles those with the person.
 
 ## 3. Requirements
 
 - **Python 3.9 or later** and **`python-docx`**: `pip install python-docx`. That is the only dependency. Tested with `python-docx` 1.2 on Python 3.14.
-- **The fonts installed** on the machine that generates the document. The defaults are IBM Plex, under the OFL. If they are missing, Word substitutes silently. To use others, reassign them: `ooxmlkit.SERIF = "Georgia"`.
+- **The fonts installed** on the machine that generates the document. The defaults are IBM Plex, under the OFL. If they are missing, Word substitutes silently. To use others, reassign them: `ooxmlkit.SERIF = "Georgia"`. The example reassigns its own three, Fraunces, Nunito Sans, and Space Mono, all OFL and available from Google Fonts; without them the manual still typesets, in another face.
 - **Windows with Microsoft Word**, for `cerrar.ps1` only. Without it you still get the `.docx`, with an empty table of contents.
 
 ## 4. Installation
@@ -123,7 +126,7 @@ Three layers, most general first.
 
 | Function | What it does |
 | --- | --- |
-| `PALETA` | Dictionary of ten default colours |
+| `PALETA` | Ten roles: `texto`, `texto_fuerte`, `texto_sec`, `texto_ter`, `primario`, `primario_int`, `senal`, `fondo`, `superficie`, `borde`. The defaults are a greyscale scaffold, not a design |
 | `usar_paleta(colores)` | Adds or replaces colours. Only touches the keys you pass |
 | `hexa(k)` | Hex without the hash, from a key or a bare hex value. Raises `ValueError` on an invalid colour, so a mistyped key cannot slip into the XML silently |
 | `hx(k)` | Uppercase hex with the hash, for printing inside the document |
@@ -138,15 +141,29 @@ Three layers, most general first.
 
 ## 7. The example
 
-`ejemplo/informe.py` generates a five-page report that exercises the whole API: cover, table of contents, two numbered sections, a lettered appendix, two tables, a figure, a colour band, and a footer with page numbering. The appendix table is built by reading the palette and computing the contrast ratios at generation time, so no value in it is typed by hand.
+`ejemplo/manual.py` typesets **Ignacia Fuentes's brand identity manual**: seven pages with a cover, table of contents, three numbered sections, a lettered appendix, four tables, a figure, a colour band, and a footer with page numbering. Ignacia is a fictional person, and her system is published in the companion repository [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal), where the same manual comes out as HTML and PDF. Same person in both places: here you see what the `.docx` adds.
+
+The example is split across two files on purpose, and that split is the part worth copying:
+
+- **`ejemplo/ignacia.py`** — what the person decides: her ten colour roles, her three families, two notes. No OOXML.
+- **`ejemplo/manual.py`** — what the library typesets. Nothing about Ignacia beyond what it imports from the file above.
+
+Replacing the first with your own and adjusting the prose in the second is the short path to your own manual. The two lines that turn the library into one person's system are these, and they go before `construir_estilos()`:
+
+```python
+ooxmlkit.usar_paleta(PALETA)                  # the ten roles, with your values
+ooxmlkit.SERIF, ooxmlkit.SANS = SERIF, SANS   # your families
+```
+
+The contrast figures in Table 2 are computed at generation time with `ratio()`, so no value is typed by hand: change a colour and the table follows.
 
 ```bash
 python ejemplo/figura.py           # the PNG, only if you want to regenerate it
-python ejemplo/informe.py          # the .docx, from the repository root
-powershell -File cerrar.ps1 ejemplo\informe.docx
+python ejemplo/manual.py           # the .docx, from any directory
+powershell -File cerrar.ps1 ejemplo\manual.docx
 ```
 
-The output is in the repository: [`informe.docx`](ejemplo/informe.docx) · [`informe.pdf`](ejemplo/informe.pdf).
+The output is in the repository: [`manual.docx`](ejemplo/manual.docx) · [`manual.pdf`](ejemplo/manual.pdf).
 
 ## 8. Known traps
 
@@ -168,4 +185,13 @@ Published under the **MIT** licence. Copyright (c) 2026 Carlos Padilla Bravo. Yo
 
 Author: **Carlos Padilla Bravo**
 
-`ooxmlkit` came out of the toolchain that generates a personal brand identity manual. The method behind that manual is published separately, as a Claude Code skill: [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal). That skill delivers HTML and its PDF and does not use this library; `ooxmlkit` matters when the deliverable has to be an editable `.docx`.
+`ooxmlkit` came out of the toolchain that generates a personal brand identity manual. The two repositories divide the work like this:
+
+| | [identidad-personal](https://github.com/Carlos-Padilla-Bravo/identidad-personal) | ooxmlkit |
+| --- | --- | --- |
+| What it is | A Claude Code skill | A Python library |
+| What it settles | **What the person decides**: essence, territory, colour, type, voice | **How the document is typeset** |
+| What it delivers | The manual in HTML, and its PDF from the browser | The manual as an editable `.docx` |
+| What it asks for | Nothing beyond a browser | Windows with Word, to close it |
+
+The natural order is one then the other: the skill takes the decisions with you, and this library typesets them in Word. Neither uses the other, which is why the example here and the example there are the same person.
