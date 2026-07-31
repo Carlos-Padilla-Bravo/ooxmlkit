@@ -34,11 +34,18 @@ Don't reopen these without being asked.
 - **The ten keys are roles, not colours.** `primario`, not `azul`; `senal`, not
   `naranja`. The point is that `usar_paleta()` can drop a green into `primario`
   without the name turning into a lie. Renaming one back to a hue breaks that.
-- **The example is Ignacia's manual, and she is shared with the sibling repo.**
-  It is deliberately the same fictional person `identidad-personal` publishes in
-  HTML, so the two repositories visibly meet. If her palette or her families
-  change there, this example starts stating values that repo no longer holds.
-  Nothing enforces it.
+- **The example is Ignacia's manual, and the sibling repo owns her.** She is
+  deliberately the same fictional person `identidad-personal` publishes in HTML,
+  so the two repositories visibly meet. Her manual there is settled and is not
+  expected to change, which makes `ejemplo/ignacia.py` a copy and never the
+  source. So the drift to guard against runs one way: editing this file and
+  leaving it saying something her manual contradicts. That happened twice while
+  writing it, once with the type roles reversed and once with the usage
+  proportion, and no test caught either; what caught them was looking at the
+  sample strip in the other repo's README. The four declarations worth checking
+  against are quoted at the top of `ejemplo/ignacia.py`, so you do not have to
+  go and find them. Nothing enforces any of this, on purpose: a checker for
+  values that do not move is machinery for its own sake.
 - **The example is split in two files on purpose.** `ejemplo/ignacia.py` is what
   the person decides, `ejemplo/manual.py` is what the library typesets. That
   split is the thing a reader is meant to copy, so don't merge them for brevity.
@@ -66,11 +73,14 @@ Don't reopen these without being asked.
 - **The figures quoted in the READMEs are checked against the code**, not
   estimated: line count, number of public functions, number of styles, number of
   palette entries, pages in the example. If you change the module, recount them.
-- **Regenerating the example rewrites a 4.3 MB blob.** `ejemplo/manual.docx`
-  carries 14 embedded font files, which is why it opens correctly on a machine
-  without Fraunces, Nunito Sans or Space Mono. Regenerate it when the output
-  really changes, not by reflex: every regeneration adds another copy to the
-  history.
+- **Regenerating the example rewrites a 4.3 MB blob, every single time.** The
+  `.docx` is not byte-reproducible: Word re-embeds the 14 font files with fresh
+  obfuscation keys on each save and rewrites the ids inside `document.xml`, so
+  running the chain over unchanged sources still rewrites nearly every part of
+  the archive. Those 14 fonts are why it opens correctly on a machine without
+  Fraunces, Nunito Sans or Space Mono, so they stay. Regenerate when the output
+  really changes, not by reflex, and if you regenerated only to check something,
+  `git checkout -- ejemplo/manual.docx ejemplo/manual.pdf` before committing.
 - **`cerrar.ps1` is what embeds them, and running `manual.py` again undoes it.**
   A bare `python ejemplo/manual.py` leaves a 78 kB file with an empty index and
   no fonts, and it looks finished. Whatever else you do, close the document

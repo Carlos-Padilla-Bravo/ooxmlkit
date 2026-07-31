@@ -8,6 +8,22 @@ Este archivo existe para separar lo que decide la persona de lo que compone la
 libreria. `manual.py` y `figura.py` lo importan los dos, asi que el color se
 escribe una vez. Es el reparto que conviene copiar: ooxmlkit no sabe nada de
 Ignacia, y este modulo no sabe nada de OOXML.
+
+MANDA EL MANUAL DE ALLA, Y NO SE MUEVE. Sus valores estan cerrados y publicados,
+asi que este archivo es una copia y nunca al reves. El riesgo no es que aquel
+cambie: es editar ESTE y dejarlo diciendo algo que el manual de ella contradice.
+Paso al escribirlo, dos veces, y no lo delato ninguna prueba sino mirar la tira
+de muestra del README de alla. Lo que ella declara, para no tener que ir a
+buscarlo:
+
+    Cuadro 3, familias y usos    Fraunces      Titulos, firma, citas
+                                 Nunito Sans   Cuerpo, cuadros, apoyos
+                                 Space Mono    Cifras, tokens, tablas de aporte
+    Figura 3, proporcion de uso  90 % neutros, 8 % primario, 2 % senal
+
+Al tocar este archivo, contrastar contra esas cuatro lineas. Si alguna vez el
+manual de ella si cambiara, esto pasa a estar mal en silencio y no hay nada que
+lo detecte.
 """
 
 # Los diez roles que ooxmlkit espera, con los valores de ella. Su sistema declara
@@ -45,8 +61,8 @@ SANS = TITULOS              # y el de SANS, los titulos
 MONO = CIFRAS
 COND = CUERPO               # su sistema no tiene condensada: repite la de leer
 
-# Cuanto de cada cosa en una pieza. Es el mismo reparto que declara su manual en
-# HTML, y si cambia alla hay que cambiarlo aca.
+# Cuanto de cada cosa en una pieza. El reparto lo declara su manual y esta
+# copiado, no elegido: iba en 88/9/3 hasta que se contrasto contra el original.
 PROPORCION = [("Neutros", 90), ("Primario", 8), ("Señal", 2)]
 
 # Estas dos cadenas se imprimen dentro del documento, asi que van con tildes.
